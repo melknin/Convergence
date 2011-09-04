@@ -37,6 +37,7 @@ function CertificateInfo(certificate, serialized) {
 
   this.md5         = this.calculateFingerprint(certificate, NSS.lib.SEC_OID_MD5, 16);
   this.sha1        = this.calculateFingerprint(certificate, NSS.lib.SEC_OID_SHA1, 20);
+  this.issuerAltName = null;
 }
 
 CertificateInfo.prototype.encodeVerificationDetails = function(details) {
@@ -49,7 +50,7 @@ CertificateInfo.prototype.encodeVerificationDetails = function(details) {
 
   dump("Encoded details: " + encodedDetails + "\n");
 
-  this.orgUnitName = NSS.lib.buffer(encodedDetails);
+  this.issuerAltName = encodedDetails;
 };
 
 CertificateInfo.prototype.deserialize = function(serialized) {
@@ -60,6 +61,7 @@ CertificateInfo.prototype.deserialize = function(serialized) {
   this.altNames         = Serialization.deserializeCERTGeneralName(serialized.altNames),
   this.md5              = serialized.md5;
   this.sha1             = serialized.sha1;
+  this.issuerAltName    = serialized.issuerAltName;
 };
 
 CertificateInfo.prototype.serialize = function() {
@@ -68,7 +70,8 @@ CertificateInfo.prototype.serialize = function() {
 	  'commonName' : this.commonName,
 	  'altNames' : Serialization.serializePointer(this.altNames),
 	  'md5' : this.md5,
-	  'sha1' : this.sha1};
+	  'sha1' : this.sha1,
+          'issuerAltName' : this.issuerAltName};
 };
 
 CertificateInfo.prototype.calculateFingerprint = function(certificate, type, length) {

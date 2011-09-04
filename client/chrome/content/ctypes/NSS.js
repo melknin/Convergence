@@ -399,6 +399,11 @@ NSS.initialize = function(nssPath) {
     				       NSS.types.PLArenaPool.ptr,
     				       ctypes.int),
 
+    PORT_Free : sharedLib.declare("PORT_Free",
+                                  ctypes.default_abi,
+                                  ctypes.void_t,
+                                  ctypes.voidptr_t),
+
     CERT_GetCommonName : sharedLib.declare("CERT_GetCommonName",
     					   ctypes.default_abi,
     					   ctypes.char.ptr,
@@ -414,7 +419,21 @@ NSS.initialize = function(nssPath) {
     						 NSS.types.CERTGeneralName.ptr,
     						 NSS.types.CERTCertificate.ptr,
     						 NSS.types.PLArenaPool.ptr),
-					   
+
+    CERT_DecodeDERCertificate : sharedLib.declare("__CERT_DecodeDERCertificate",
+                                                  ctypes.default_abi,
+                                                  NSS.types.CERTCertificate.ptr,
+                                                  NSS.types.SECItem.ptr,
+                                                  ctypes.int,
+                                                  ctypes.char.ptr),
+
+    CERT_FindCertExtension : sharedLib.declare("CERT_FindCertExtension",
+                                                   ctypes.default_abi,
+                                                   ctypes.int,
+                                                   NSS.types.CERTCertificate.ptr,
+                                                   ctypes.int,
+                                                   NSS.types.SECItem.ptr),
+    
   };
 
 };

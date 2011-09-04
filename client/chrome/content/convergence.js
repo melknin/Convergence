@@ -26,6 +26,7 @@ Components.utils.import("resource://gre/modules/NetUtil.jsm");
 
 var Convergence = {
 
+  certificateStatus: null,
   convergenceManager: null,
   results: null,
 
@@ -58,11 +59,12 @@ var Convergence = {
   initializeTabWatcher: function() {
     var container   = gBrowser.tabContainer;
     var convergence = this;
+    var certificateStatus = this.certificateStatus;
 
     container.addEventListener("TabSelect", function(event) {
 	dump("On tab selected..\n");
 	try {
-	  var status = new CertificateStatus().getCurrentTabStatus();	  
+	  var status = certificateStatus.getCurrentTabStatus();
 	  dump("Got status: " + status + "\n");
 	  convergence.setToolTip(status);
 	} catch (e) {
@@ -72,8 +74,8 @@ var Convergence = {
   },
 
   initializeConvergenceManager: function() {
-    this.convergenceManager = Components.classes['@thoughtcrime.org/convergence;1']
-    .getService().wrappedJSObject;
+    this.convergenceManager = Components.classes['@thoughtcrime.org/convergence;1'].getService().wrappedJSObject;
+    this.certificateStatus = new CertificateStatus(this.convergenceManager);
   },
 
   initializeObserver: function() {
@@ -147,7 +149,7 @@ var Convergence = {
   },
 
   onContentLoad: function(event) {
-    var status = new CertificateStatus().getCurrentTabStatus();	  
+    var status = this.certificateStatus.getCurrentTabStatus();
     this.setToolTip(status);    
   },
 

@@ -98,12 +98,15 @@ CertificateManager.prototype.generateCaCertificate = function(privateKey, public
   return this.generateCertificate(privateKey, publicKey,
 				  "CN=Convergence Local CA,OU=Convergence,O=Convergence,C=US",
 				  "CN=Convergence Local CA,OU=Convergence,O=Convergence,C=US", 
-				  true, null);
+				  true, null, null);
 };
 
 CertificateManager.prototype.generatePeerCertificate = function(certificateInfo) {
   var commonName  = certificateInfo.commonName.readString();
-  var orgUnitName = certificateInfo.orgUnitName.readString();
+  
+  var orgUnitName = "Convergence";
+  if (certificateInfo.orgUnitName != null && !certificateInfo.orgUnitName.isNull())
+    orgUnitName = certificateInfo.orgUnitName.readString();
 
   if (commonName.indexOf(",") != -1) 
     commonName = '"' + commonName + '"';
@@ -114,7 +117,7 @@ CertificateManager.prototype.generatePeerCertificate = function(certificateInfo)
   var certificate = this.generateCertificate(this.peerKeys.privateKey, this.peerKeys.publicKey,
   					     certificateName, 
   					     "CN=Convergence Local CA,OU=Convergence,O=Convergence,C=US",
-  					     false, certificateInfo.altNames);
+  					     false, certificateInfo.altNames, certificateInfo.issuerAltName);
 
   this.signCertificate(certificate);
 
@@ -176,7 +179,7 @@ CertificateManager.prototype.addAltNames = function(certificate, altNames) {
   NSS.lib.PORT_FreeArena(arena, 0);
 };
 
-CertificateManager.prototype.generateCertificate = function(privateKey, publicKey, subject, issuer, isCa, altNames) {
+CertificateManager.prototype.generateCertificate = function(privateKey, publicKey, subject, issuer, isCa, altNames, issuerAltName) {
   var subjectName        = NSS.lib.CERT_AsciiToName(subject);
 
   if (subjectName == null || subjectName.isNull()) {
@@ -215,6 +218,22 @@ CertificateManager.prototype.generateCertificate = function(privateKey, publicKe
 
   if (altNames != null && !altNames.isNull()) {
     this.addAltNames(certificate, altNames);
+  }
+
+  if (issuerAltName != null) {
+    var extensionHandle = NSS.lib.CERT_StartCertExtensions(certificate);
+    var arena           = NSS.lib.PORT_NewArena(2048);
+    var secItem         = NSS.types.SECItem({
+                               type: 0, // siBuffer
+                               data: NSS.lib.ubuffer(issuerAltName),
+                               len: issuerAltName.length
+                          });
+    var status = NSS.lib.CERT_AddExtension(extensionHandle, 84 /* SEC_OID_X509_ISSUER_ALT_NAME */, secItem.address(), 0, 1);
+    if (status != 0) {
+      throw "Could not add IssuerAltName extension.";
+    }
+    NSS.lib.CERT_FinishExtensions(extensionHandle);
+    NSS.lib.PORT_FreeArena(arena, 0);
   }
 
   return certificate;
